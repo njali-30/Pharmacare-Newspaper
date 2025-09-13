@@ -1,0 +1,138 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.about-section {
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e3f2fd, #f1f8e9, #fffde7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container */
+.about-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    width: 90%;
+    gap: 60px;
+}
+
+/* Founder Side */
+.founder-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    text-align: center;
+}
+
+.founder-photo-wrapper {
+    width: 250px;       /* Increased size */
+    height: 250px;      /* Increased size */
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 5px solid #c5e1a5;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.15);
+    /* Removed float animation */
+}
+
+.founder-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.founder-photo-wrapper:hover .founder-photo {
+    transform: scale(1.05);
+}
+
+.founder-name {
+    font-size: 2rem;   /* Slightly bigger */
+    font-weight: bold;
+    color: #2e7d32;
+    margin-bottom: 5px;
+}
+
+.founder-title {
+    font-size: 1.2rem;
+    color: #558b2f;
+}
+
+/* Vision Side */
+.vision-side {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* Ensure font */
+}
+
+.vision-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #0288d1;
+    margin-bottom: 20px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.vision-description {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 25px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.editors p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .about-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .vision-side {
+        margin-top: 40px;
+    }
+
+    .founder-photo-wrapper {
+        width: 200px;
+        height: 200px;
+    }
+
+    .founder-name {
+        font-size: 1.8rem;
+    }
+
+    .founder-title {
+        font-size: 1rem;
+    }
+
+    .vision-title {
+        font-size: 2rem;
+    }
+
+    .vision-description {
+        font-size: 1.1rem;
+    }
+
+    .editors p {
+        font-size: 0.95rem;
+    }
+}
