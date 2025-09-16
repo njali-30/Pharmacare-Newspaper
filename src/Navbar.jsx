@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar() {
     const [active, setActive] = useState("home");
     const navigate = useNavigate();
-    const location = useLocation();
 
     const handleNavigation = (id, e) => {
         e.preventDefault();
-        const path = id.toLowerCase() === "home" ? "/" : `/${id.toLowerCase()}`;
-        navigate(path);
         setActive(id.toLowerCase());
+        if (id.toLowerCase() === "admin") {
+            navigate("/admin"); // Navigate to Admin page
+        } else {
+            // Scroll to section for other links
+            const section = document.getElementById(id.toLowerCase());
+            if (section) {
+                section.scrollIntoView({ behavior: "smooth" });
+            }
+        }
     };
-
-    // Update active tab when route changes
-    useEffect(() => {
-        const current = location.pathname === "/" ? "home" : location.pathname.slice(1);
-        setActive(current);
-    }, [location]);
 
     return (
         <nav className="navbar">
             <div className="navbar-left">
                 <a
-                    href="/"
+                    href="#home"
                     className="brand"
                     onClick={(e) => handleNavigation("home", e)}
                 >
@@ -33,22 +33,27 @@ export default function Navbar() {
             </div>
 
             <div className="navbar-center">
-                {["Home", "About", "Editions", "Specials", "Contact", "Faqs"].map((id) => (
-                    <a
-                        key={id}
-                        href={`/${id.toLowerCase()}`}
-                        className={active === id.toLowerCase() ? "active-link" : ""}
-                        onClick={(e) => handleNavigation(id, e)}
-                    >
-                        {id}
-                    </a>
-                ))}
+                {["Home", "About", "Editions", "Specials", "Contact"].map(
+                    (id) => (
+                        <a
+                            key={id}
+                            href={`#${id.toLowerCase()}`}
+                            className={active === id.toLowerCase() ? "active-link" : ""}
+                            onClick={(e) => handleNavigation(id, e)}
+                        >
+                            {id}
+                        </a>
+                    )
+                )}
             </div>
 
             <div className="navbar-right">
-                <Link to="/admin" className="admin-btn">
+                <button
+                    className="admin-btn"
+                    onClick={(e) => handleNavigation("admin", e)}
+                >
                     Admin
-                </Link>
+                </button>
             </div>
         </nav>
     );
