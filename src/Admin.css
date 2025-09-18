@@ -1,179 +1,212 @@
-/* Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* ============================
+   Responsive Login + Admin Tabs
+   (paste this into Admin.css or Login.css)
+   Keeps original colors & layout, only adds responsive behavior
+   ============================ */
+
+/* ---------- Reset & base ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #e3f2fd, #f1f8e9, #fffde7);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #1e2b4d;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.about-section {
-    width: 100%;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #e3f2fd, #f1f8e9, #fffde7); /* SAME as home */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 80px 20px;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+/* ---------- Center wrapper (makes login always centered) ---------- */
+.center-wrap {
+  width: 100%;
+  max-width: 420px;         /* max width on desktop */
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Container */
-.about-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1200px;
-    width: 90%;
-    gap: 60px;
+/* ---------- Login container (card) ---------- */
+.login-container {
+  background: #ffffff;      /* keep white background */
+  width: 100%;
+  border-radius: 14px;
+  padding: 40px 32px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
 }
 
-/* Founder Side */
-.founder-side {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-    text-align: center;
+/* subtle hover/lift on larger screens */
+@media (min-width: 900px) {
+  .login-container:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,0.14); }
 }
 
-.founder-photo-wrapper {
-    width: 250px;
-    height: 250px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-bottom: 20px;
-    border: 5px solid #c5e1a5;
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.15);
+/* heading */
+.login-container h2 {
+  color: #0288d1;           /* keep blue heading color */
+  font-size: 1.75rem;
+  line-height: 1.1;
+  text-align: center;
+  font-weight: 600;
 }
 
-.founder-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+/* optional subtitle */
+.login-sub {
+  font-size: 0.95rem;
+  color: #667085;
+  text-align: center;
+  margin-top: -6px;
 }
 
-.founder-photo-wrapper:hover .founder-photo {
-    transform: scale(1.05);
+/* ---------- Form ---------- */
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.founder-name {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #2e7d32;
-    margin-bottom: 5px;
+/* inputs stretch full width */
+.login-form input[type="email"],
+.login-form input[type="password"],
+.login-form input[type="text"] {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #dfeaf7;
+  background: #102438;
+  outline: none;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.founder-title {
-    font-size: 1.2rem;
-    color: #558b2f;
+/* focus */
+.login-form input:focus {
+  border-color: #0288d1;
+  box-shadow: 0 8px 20px rgba(2,136,209,0.08);
 }
 
-/* Vision Side */
-.vision-side {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+/* hint text / small note */
+.login-note {
+  font-size: 0.9rem;
+  color: #8b98b1;
+  text-align: center;
 }
 
-.vision-title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #0288d1;
-    margin-bottom: 20px;
+/* submit button */
+.login-form button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(45deg, #0288d1, #26c6da);
+  color: #fff;
+  font-weight: 700;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 
-.vision-description {
-    font-size: 1.2rem;
-    line-height: 1.8;
-    color: #333;
-    margin-bottom: 25px;
+.login-form button[type="submit"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(2,136,209,0.12);
 }
 
-.editors p {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 8px;
+/* small secondary button (optional) */
+.login-form .btn-secondary {
+  background: transparent;
+  color: #0288d1;
+  border: 1px solid rgba(2,136,209,0.12);
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-    .about-container {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .vision-side {
-        margin-top: 40px;
-    }
-
-    .founder-photo-wrapper {
-        width: 200px;
-        height: 200px;
-    }
-
-    .founder-name {
-        font-size: 1.8rem;
-    }
-
-    .founder-title {
-        font-size: 1rem;
-    }
-
-    .vision-title {
-        font-size: 2rem;
-    }
-
-    .vision-description {
-        font-size: 1.1rem;
-    }
-
-    .editors p {
-        font-size: 0.95rem;
-    }
+/* ---------- Admin tabs (responsive) ---------- */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;           /* wrap on small screens */
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
 }
 
-
-/* 8 bubbles with shades matching theme */
-.bubble1 { width: 50px; height: 50px; background: rgba(2,136,209,0.3); left: 10%; animation: float1 20s infinite; }
-.bubble2 { width: 35px; height: 35px; background: rgba(38,198,218,0.3); left: 25%; animation: float2 18s infinite; }
-.bubble3 { width: 60px; height: 60px; background: rgba(205,230,197,0.4); left: 40%; animation: float3 22s infinite; }
-.bubble4 { width: 30px; height: 30px; background: rgba(174,213,129,0.35); left: 55%; animation: float4 19s infinite; }
-.bubble5 { width: 45px; height: 45px; background: rgba(38,198,218,0.25); left: 70%; animation: float1 21s infinite; }
-.bubble6 { width: 25px; height: 25px; background: rgba(2,136,209,0.2); left: 82%; animation: float2 17s infinite; }
-.bubble7 { width: 40px; height: 40px; background: rgba(174,213,129,0.3); left: 60%; animation: float3 20s infinite; }
-.bubble8 { width: 55px; height: 55px; background: rgba(205,230,197,0.3); left: 35%; animation: float4 23s infinite; }
-
-/* Smooth curved floating animations */
-@keyframes float1 {
-    0% { transform: translate(0,0) scale(0.6); opacity:0; }
-    25% { opacity:0.4; }
-    50% { transform: translate(30px,-50vh) scale(0.8); opacity:0.7; }
-    75% { opacity:0.4; }
-    100% { transform: translate(-20px,-100vh) scale(1); opacity:0; }
+.admin-tabs button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(45deg, #0288d1, #26c6da);
+  color: #fff;
+  transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
-@keyframes float2 {
-    0% { transform: translate(0,0) scale(0.5); opacity:0; }
-    25% { opacity:0.5; }
-    50% { transform: translate(-30px,-55vh) scale(0.7); opacity:0.8; }
-    75% { opacity:0.4; }
-    100% { transform: translate(20px,-105vh) scale(0.9); opacity:0; }
+.admin-tabs button:hover { transform: translateY(-3px); }
+.admin-tabs button.active {
+  background: linear-gradient(45deg, #2e7d32, #0288d1);
 }
 
-@keyframes float3 {
-    0% { transform: translate(0,0) scale(0.7); opacity:0; }
-    25% { opacity:0.4; }
-    50% { transform: translate(25px,-60vh) scale(1); opacity:0.7; }
-    75% { opacity:0.5; }
-    100% { transform: translate(-15px,-110vh) scale(0.8); opacity:0; }
+/* make sure tabs shrink nicely on mobile */
+@media (max-width: 420px) {
+  .admin-tabs button { padding: 8px 10px; font-size: 0.95rem; }
 }
 
-@keyframes float4 {
-    0% { transform: translate(0,0) scale(0.6); opacity:0; }
-    25% { opacity:0.5; }
-    50% { transform: translate(-20px,-50vh) scale(0.9); opacity:0.8; }
-    75% { opacity:0.4; }
-    100% { transform: translate(25px,-100vh) scale(1); opacity:0; }
+/* ---------- Utility/responsive tweaks ---------- */
+/* container padding shrink on tablet */
+@media (max-width: 768px) {
+  .center-wrap { max-width: 360px; padding: 0 6px; }
+  .login-container { padding: 32px 20px; border-radius: 12px; }
+  .login-container h2 { font-size: 1.5rem; }
+  .login-form input { font-size: 0.98rem; padding: 11px 12px; }
+  .login-form button[type="submit"] { font-size: 1rem; padding: 11px; }
 }
+
+/* small phones */
+@media (max-width: 420px) {
+  body { padding: 10px; align-items: flex-start; } /* allow vertical scroll if keyboard opens */
+  .center-wrap { max-width: 100%; }
+  .login-container { padding: 22px 14px; border-radius: 10px; }
+  .login-container h2 { font-size: 1.3rem; }
+  .login-sub { font-size: 0.88rem; }
+  .login-form input { font-size: 0.95rem; padding: 10px 10px; border-radius: 8px; }
+  .login-form button[type="submit"] { padding: 10px; font-size: 1rem; border-radius: 8px; }
+  .admin-tabs { gap: 6px; }
+}
+
+/* if device prefers reduced motion, remove animations */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Accessibility focus outlines ---------- */
+button:focus, input:focus {
+  outline: 3px solid rgba(2,136,209,0.12);
+  outline-offset: 2px;
+}
+
+/* ---------- Small helpers so tabs / login look good with admin panel ---------- */
+.kv { color: #667085; font-size: 13px; }
+.subtle { color: #667085; font-size: 13px; }
+
+/* ---------- Example usage wrapper HTML (for reference) ----------
+<div class="center-wrap">
+  <div class="login-container">
+    <h2>Admin Login</h2>
+    <div class="login-sub">Sign in to access the dashboard</div>
+    <form class="login-form"> ... </form>
+    <div class="admin-tabs">
+      <button class="active">Admin</button>
+      <button>Login</button>
+    </div>
+  </div>
+</div>
+------------------------------------------------------------------ */
