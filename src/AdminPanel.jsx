@@ -86,7 +86,7 @@ export default function AdminPanel({ onLogout }) {
       <main className="admin-main">
         <header className="admin-header">
           <div>
-            <h1>📰 Newspaper Admin Panel</h1>
+            <h1>Admin Panel</h1>
             <p className="subtle">Manage editions — insert, update, delete and preview.</p>
           </div>
           <div className="header-actions">
