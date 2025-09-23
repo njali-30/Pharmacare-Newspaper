@@ -1,39 +1,77 @@
-import React from "react";
-import "./About.css";
-import founder from "./assets/founder.jpg"; // Make sure the founder image is in src/assets
+import React, { useState, useEffect } from "react";
+import AdminPanel from "./AdminPanel";
+import "./Admin.css";
 
-export default function About() {
-    return (
-        <section className="about-section">
-            <div className="about-container">
+/**
+ * Admin wrapper that persists login state in localStorage.
+ * Key used: "pharmacare_isAdmin" (string "true" / "false")
+ */
 
-                {/* Left Side - Founder */}
-                <div className="founder-side">
-                    <div className="founder-photo-wrapper">
-                        <img src={founder} alt="Founder" className="founder-photo" />
-                    </div>
-                    <h3 className="founder-name">Atul Jhalke</h3>
-                    <p className="founder-title">Founder & Visionary</p>
-                </div>
+const STORAGE_KEY = "pharmacare_isAdmin";
 
-                {/* Right Side - Vision & Editors */}
-                <div className="vision-side">
-                    <h2 className="vision-title">Our Vision</h2>
-                    <p className="vision-description">
-                        PharmaCare has been dedicated to delivering insightful health news, trusted pharmaceutical updates, and reliable healthcare knowledge.
+function AdminLogin({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-                        Our goal is to empower readers with accurate information that helps them make better health decisions — one edition at a time.
-                    </p>
-                    <div className="editors">
-                        <p><strong>Editor:</strong> Atul Jhalke</p>
-                        <p><strong>Executive Editor:</strong> Ravindra Pawar</p>
-                        <p><strong>Associate Editor:</strong> Sachin Valunj</p>
-                    </div>
-                </div>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // replace with your real auth check later
+    if (email === "admin@example.com" && password === "password") {
+      // save to localStorage so session persists across reloads
+      localStorage.setItem(STORAGE_KEY, "true");
+      onLogin();
+    } else {
+      alert("Invalid credentials");
+    }
+  };
 
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <h2>Admin Login</h2>
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="email"
+            placeholder="Admin Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Admin Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Login</button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
-            </div>
+export default function Admin() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  // initialize from localStorage on mount
+  useEffect(() => {
+    const val = localStorage.getItem(STORAGE_KEY);
+    if (val === "true") setIsAdmin(true);
+  }, []);
 
-        </section>
-    );
+  // logout handler that clears localStorage and local state
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setIsAdmin(false);
+  };
+
+  return (
+    <div className="App">
+      {!isAdmin ? (
+        <AdminLogin onLogin={() => setIsAdmin(true)} />
+      ) : (
+        <AdminPanel onLogout={handleLogout} />
+      )}
+    </div>
+  );
 }
