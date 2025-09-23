@@ -1,44 +1,121 @@
 import React, { useState, useEffect } from "react";
 import "./AdminPanel.css";
+import { db, storage } from "./firebase.js";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  query,
+  orderBy
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AdminPanel({ onLogout }) {
   const [activeTab, setActiveTab] = useState("insert");
-  const [newspapers, setNewspapers] = useState({});
-  const [form, setForm] = useState({ date: "", title: "", pages: [] });
+  const [editions, setEditions] = useState([]);
+  const [form, setForm] = useState({ date: "", title: "", files: [] });
   const [message, setMessage] = useState("");
+  const [contacts, setContacts] = useState([]);
+
+  // Load editions from Firestore
+  const loadEditions = async () => {
+    const q = query(collection(db, "editions"), orderBy("date", "desc"));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setEditions(data);
+  };
+
+  // Load contacts from Firestore
+  const loadContacts = async () => {
+    const snapshot = await getDocs(collection(db, "contacts"));
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setContacts(data);
+  };
 
   useEffect(() => {
-    const saved = localStorage.getItem("newspapers");
-    if (saved) setNewspapers(JSON.parse(saved));
+    loadEditions();
+    loadContacts();
   }, []);
-
-  const saveToStorage = (data) => {
-    localStorage.setItem("newspapers", JSON.stringify(data));
-    setNewspapers(data);
-  };
 
   const showMessage = (msg) => {
     setMessage(msg);
     setTimeout(() => setMessage(""), 2500);
   };
 
-  const convertFilesToBase64 = (files) => {
-    const fileArray = Array.from(files);
-    const readers = fileArray.map(
-      (file) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        })
-    );
-    return Promise.all(readers);
+  // Upload files to Firebase Storage and return their URLs
+  const uploadPages = async (files, date) => {
+    const urls = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const storageRef = ref(storage, `editions/${date}/page-${Date.now()}-${i}-${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      urls.push(url);
+    }
+    return urls;
   };
+
+  // INSERT
+  const handleInsert = async (e) => {
+  e.preventDefault();
+  if (!form.date) return alert("Please select a date");
+  if (form.files.length === 0) return alert("Please select files");
+
+  // Upload pages to Storage
+  const pageUrls = await uploadPages(form.files, form.date);
+
+  const docRef = doc(db, "editions", form.date);
+  await setDoc(docRef, { title: form.title, pages: pageUrls, date: form.date });
+
+  setForm({ date: "", title: "", files: [] });
+  showMessage("Edition inserted ✅");
+  await loadEditions();
+
+  // redirect to view
+  setActiveTab("view");
+};
+
+
+  // UPDATE
+  const handleUpdate = async (e) => {
+  e.preventDefault();
+  if (!form.date) return alert("Please select a date");
+  const existing = editions.find(ed => ed.id === form.date);
+  if (!existing) return alert("Edition not found");
+
+  let pageUrls = existing.pages || [];
+  if (form.files.length > 0) {
+    const uploaded = await uploadPages(form.files, form.date);
+    pageUrls = [...pageUrls, ...uploaded];
+  }
+
+  const docRef = doc(db, "editions", form.date);
+  await updateDoc(docRef, { title: form.title, pages: pageUrls });
+
+  setForm({ date: "", title: "", files: [] });
+  showMessage("Edition updated ✏");
+  await loadEditions();
+
+  // redirect to view
+  setActiveTab("view");
+};
+
+
+  // DELETE
+  const handleDelete = async (date) => {
+  const docRef = doc(db, "editions", date);
+  await deleteDoc(docRef);
+  showMessage("Edition deleted 🗑");
+  await loadEditions();
+  setActiveTab("view");
+};
+
 
   return (
     <div className="admin-root">
-      {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <div className="logo">PC</div>
@@ -48,302 +125,149 @@ export default function AdminPanel({ onLogout }) {
           </div>
         </div>
 
+
         <nav className="admin-nav">
-          <button
-            className={activeTab === "insert" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("insert")}
-          >
-            Insert
-          </button>
-          <button
-            className={activeTab === "update" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("update")}
-          >
-            Update
-          </button>
-          <button
-            className={activeTab === "delete" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("delete")}
-          >
-            Delete
-          </button>
-          <button
-            className={activeTab === "view" ? "nav-item active" : "nav-item"}
-            onClick={() => setActiveTab("view")}
-          >
-            View
-          </button>
+          {["insert", "update", "delete", "view", "contacts"].map(tab => (
+            <button
+              key={tab}
+              className={activeTab === tab ? "nav-item active" : "nav-item"}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </nav>
 
         <div className="admin-logout">
-          <button className="btn-logout" onClick={onLogout}>
-            Logout
-          </button>
+          <button className="btn-logout" onClick={onLogout}>Logout</button>
         </div>
       </aside>
 
-      {/* Main */}
+
       <main className="admin-main">
         <header className="admin-header">
-          <div>
-            <h1>Admin Panel</h1>
-            <p className="subtle">Manage editions — insert, update, delete and preview.</p>
-          </div>
-          <div className="header-actions">
-            <div className="kv">{message ? message : "All changes saved locally"}</div>
-          </div>
+          <h1>📰 Newspaper Admin Panel</h1>
+          <div className="kv">{message || "Manage editions in the cloud"}</div>
         </header>
 
-        {/* Content area */}
         <section className="table-section">
-          {/* INSERT */}
+          {/* INSERT FORM */}
           {activeTab === "insert" && (
-            <form
-              className="form-card"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!form.date) return alert("Please select a date");
-                const updated = {
-                  ...newspapers,
-                  [form.date]: { title: form.title, pages: form.pages },
-                };
-                saveToStorage(updated);
-                setForm({ date: "", title: "", pages: [] });
-                showMessage("Edition inserted successfully ✅");
-              }}
-            >
+            <form className="form-card" onSubmit={handleInsert}>
               <label>Date</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                required
-              />
-
+              <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
               <label>Title</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Edition title"
-              />
-
+              <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
               <label>Upload Pages</label>
               <input
                 type="file"
                 multiple
                 accept="image/*,.pdf"
-                onChange={async (e) => {
-                  const results = await convertFilesToBase64(e.target.files);
-                  setForm({ ...form, pages: results });
-                }}
+                onChange={e => setForm({ ...form, files: Array.from(e.target.files) })}
               />
-
-              <div style={{ marginTop: 12 }}>
-                <button className="btn" type="submit">
-                  Insert Edition
-                </button>
-              </div>
+              {form.files.length > 0 && (
+                <div>
+                  <strong>Selected files:</strong>
+                  <ul>
+                    {form.files.map((file, idx) => (
+                      <li key={idx}>{file.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <button className="btn" type="submit">Insert Edition</button>
             </form>
           )}
 
-          {/* UPDATE */}
+          {/* UPDATE FORM */}
           {activeTab === "update" && (
-            <form
-              className="form-card"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!form.date || !newspapers[form.date]) {
-                  alert("Edition not found");
-                  return;
-                }
-                const updated = {
-                  ...newspapers,
-                  [form.date]: {
-                    title: form.title || newspapers[form.date].title,
-                    pages: form.pages,
-                  },
-                };
-                saveToStorage(updated);
-                setForm({ date: "", title: "", pages: [] });
-                showMessage("Edition updated successfully ✏");
-              }}
-            >
+            <form className="form-card" onSubmit={handleUpdate}>
               <label>Date</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => {
-                  const date = e.target.value;
-                  if (newspapers[date]) {
-                    setForm({
-                      date,
-                      title: newspapers[date].title,
-                      pages: [...newspapers[date].pages],
-                    });
-                  } else {
-                    setForm({ date, title: "", pages: [] });
-                  }
-                }}
-                required
-              />
-
-              {form.date && newspapers[form.date] && (
+              <input type="date" value={form.date} onChange={e => {
+                const date = e.target.value;
+                const existing = editions.find(ed => ed.id === date);
+                if (existing) setForm({ date, title: existing.title, files: [] });
+                else setForm({ date, title: "", files: [] });
+              }} required />
+              {form.date && (
                 <>
                   <label>Title</label>
-                  <input
-                    type="text"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  />
-
-                  <h4>Existing Pages</h4>
-                  {form.pages.map((page, idx) => (
-                    <div key={idx} className="page-edit-card">
-                      <h5>Page {idx + 1}</h5>
-                      {page.startsWith("data:application/pdf") ? (
-                        <embed src={page} type="application/pdf" width="100%" height="200px" />
-                      ) : (
-                        <img src={page} alt={`Page ${idx + 1}`} style={{ maxWidth: "220px" }} />
-                      )}
-
-                      <div className="page-actions">
-                        <label className="replace-btn">
-                          Replace
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            style={{ display: "none" }}
-                            onChange={async (e) => {
-                              const results = await convertFilesToBase64(e.target.files);
-                              const newPages = [...form.pages];
-                              newPages[idx] = results[0];
-                              setForm({ ...form, pages: newPages });
-                            }}
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          className="btn danger"
-                          onClick={() => {
-                            const newPages = form.pages.filter((_, i) => i !== idx);
-                            setForm({ ...form, pages: newPages });
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
+                  <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                   <label>Add More Pages</label>
                   <input
                     type="file"
                     multiple
                     accept="image/*,.pdf"
-                    onChange={async (e) => {
-                      const results = await convertFilesToBase64(e.target.files);
-                      setForm({ ...form, pages: [...form.pages, ...results] });
-                    }}
+                    onChange={e => setForm({ ...form, files: Array.from(e.target.files) })}
                   />
+                  {form.files.length > 0 && (
+                    <div>
+                      <strong>Selected files:</strong>
+                      <ul>
+                        {form.files.map((file, idx) => (
+                          <li key={idx}>{file.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <button className="btn" type="submit">Update Edition</button>
                 </>
               )}
-
-              <div style={{ marginTop: 12 }}>
-                <button className="btn" type="submit">
-                  Update Edition
-                </button>
-              </div>
             </form>
           )}
 
           {/* DELETE */}
           {activeTab === "delete" && (
-            <form
-              className="form-card"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!form.date || !newspapers[form.date]) {
-                  alert("Edition not found");
-                  return;
-                }
-                const updated = { ...newspapers };
-                delete updated[form.date];
-                saveToStorage(updated);
-                setForm({ date: "", title: "", pages: [] });
-                showMessage("Edition deleted 🗑");
-              }}
-            >
-              <label>Date</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                required
-              />
-
-              <div style={{ marginTop: 12 }}>
-                <button className="btn danger" type="submit">
-                  Delete Edition
-                </button>
-              </div>
-            </form>
+            <div className="view-section">
+              {editions.map(ed => (
+                <div key={ed.id} className="edition-card">
+                  <h3>{ed.date} — {ed.title}</h3>
+                  <button className="btn danger" onClick={() => handleDelete(ed.id)}>Delete</button>
+                </div>
+              ))}
+            </div>
           )}
 
           {/* VIEW */}
           {activeTab === "view" && (
             <div className="view-section">
-              {Object.keys(newspapers).length === 0 ? (
-                <p className="subtle">No editions found</p>
-              ) : (
-                Object.entries(newspapers)
-                  .sort((a, b) => (a[0] < b[0] ? 1 : -1)) // show recent first
-                  .map(([date, data]) => (
-                    <div key={date} className="edition-card">
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <h3 style={{ marginBottom: 8 }}>
-                          {date} — {data.title}
-                        </h3>
-                        <div>
-                          <button
-                            className="btn small"
-                            onClick={() => {
-                              // quick load into update form
-                              setActiveTab("update");
-                              setForm({ date, title: data.title, pages: [...data.pages] });
-                              showMessage("Loaded edition into Update tab");
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn small danger"
-                            style={{ marginLeft: 8 }}
-                            onClick={() => {
-                              const updated = { ...newspapers };
-                              delete updated[date];
-                              saveToStorage(updated);
-                              showMessage("Edition removed");
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-
-                      {data.pages.map((page, idx) => (
-                        <div key={idx} className="page-preview" style={{ marginTop: 12 }}>
-                          <h5>Page {idx + 1}</h5>
-                          {page.startsWith("data:application/pdf") ? (
-                            <embed src={page} type="application/pdf" width="100%" height="400px" />
-                          ) : (
-                            <img src={page} alt={`Page ${idx + 1}`} style={{ maxWidth: "100%" }} />
-                          )}
-                        </div>
-                      ))}
+              {editions.map(ed => (
+                <div key={ed.id} className="edition-card">
+                  <h3>{ed.date} — {ed.title}</h3>
+                  {ed.pages && ed.pages.map((p, idx) => (
+                    <div key={idx}>
+                      {p.endsWith(".pdf") ? (
+                        <embed src={p} type="application/pdf" width="100%" height="300px" />
+                      ) : (
+                        <img src={p} alt={`Page ${idx + 1}`} style={{ maxWidth: "100%" }} />
+                      )}
                     </div>
-                  ))
+                  ))}
+                  <button className="btn small" onClick={() => { setActiveTab("update"); setForm({ date: ed.date, title: ed.title, files: [] }); }}>Edit</button>
+                  <button className="btn small danger" onClick={() => handleDelete(ed.id)}>Delete</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* CONTACTS */}
+          {activeTab === "contacts" && (
+            <div className="view-section">
+              <h2>Contact Messages</h2>
+              {contacts.length === 0 ? (
+                <p>No contacts received.</p>
+              ) : (
+                contacts.map(contact => (
+                  <div key={contact.id} className="edition-card">
+                    <strong>{contact.name}</strong> ({contact.email})
+                    <p>{contact.message}</p>
+                    <small>
+                      {contact.timestamp
+                        ? new Date(contact.timestamp.seconds * 1000).toLocaleString()
+                        : ""}
+                    </small>
+                  </div>
+                ))
               )}
             </div>
           )}
@@ -352,3 +276,5 @@ export default function AdminPanel({ onLogout }) {
     </div>
   );
 }
+
+
